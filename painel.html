@@ -1,0 +1,689 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel da apuração</title>
+<style>
+  :root {
+    color-scheme: light;
+    --page: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink2: #52514e; --muted: #898781;
+    --grid: #e1e0d9; --axis: #c3c2b7; --border: rgba(11,11,11,.10); --mid: #f0efec; --wash: rgba(11,11,11,.045);
+    --blue: #2a78d6; --red: #e34948; --orange: #eb6834;
+    --good: #0ca30c; --warn: #fab219; --serious: #ec835a; --crit: #d03b3b;
+    --a: var(--blue); --b: var(--red);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --page: #0d0d0d; --surface: #1a1a19; --ink: #ffffff; --ink2: #c3c2b7; --muted: #898781;
+      --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,.10); --mid: #383835; --wash: rgba(255,255,255,.06);
+      --blue: #3987e5; --red: #e66767; --orange: #d95926;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --ink: #ffffff; --ink2: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,.10); --mid: #383835; --wash: rgba(255,255,255,.06);
+    --blue: #3987e5; --red: #e66767; --orange: #d95926;
+  }
+  :root[data-ca="red"] { --a: var(--red); } :root[data-ca="blue"] { --a: var(--blue); } :root[data-ca="orange"] { --a: var(--orange); }
+  :root[data-cb="red"] { --b: var(--red); } :root[data-cb="blue"] { --b: var(--blue); } :root[data-cb="orange"] { --b: var(--orange); }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: var(--page); color: var(--ink); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  button, input, select { font: inherit; color: inherit; }
+  h1, h2, h3, p { margin: 0; }
+
+  .topo { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 12px 20px; border-bottom: 1px solid var(--border); background: var(--surface); position: sticky; top: 0; z-index: 5; }
+  .topo h1 { font-size: 16px; font-weight: 650; }
+  .chip { font-size: 12px; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--border); color: var(--ink2); white-space: nowrap; }
+  .chip.vivo::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--good); margin-right: 6px; }
+  .topo .info { color: var(--ink2); font-size: 13px; }
+  .topo .direita { margin-left: auto; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .btn { border: 1px solid var(--border); background: var(--surface); border-radius: 8px; padding: 5px 12px; cursor: pointer; }
+  .btn:hover { background: var(--wash); }
+  .btn:disabled { opacity: .55; cursor: default; }
+
+  main { max-width: 1240px; margin: 0 auto; padding: 16px 20px 40px; display: grid; gap: 14px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; min-width: 0; }
+  .card > h2 { font-size: 14px; font-weight: 650; }
+  .card > .sub { color: var(--ink2); font-size: 12.5px; margin-top: 1px; }
+  .aviso { text-align: center; color: var(--ink2); padding: 56px 20px; }
+  .aviso strong { display: block; color: var(--ink); font-size: 18px; margin-bottom: 6px; }
+  .opaco { opacity: .55; transition: opacity .2s; }
+
+  .sw { width: 12px; height: 12px; border-radius: 3px; flex: none; }
+  .sw.a { background: var(--a); } .sw.b { background: var(--b); }
+
+  /* cartoes de numero */
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+  .tile .rot { color: var(--ink2); font-size: 12.5px; }
+  .tile .val { font-size: 26px; font-weight: 650; line-height: 1.2; margin-top: 2px; }
+  .tile .nota { color: var(--ink2); font-size: 12.5px; margin-top: 2px; }
+  .medidor { height: 6px; border-radius: 3px; background: var(--grid); margin-top: 8px; overflow: hidden; }
+  .medidor > i { display: block; height: 100%; background: var(--ink2); border-radius: 3px; }
+  .estado { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; font-weight: 600; margin-top: 4px; }
+  .estado i { width: 15px; height: 15px; border-radius: 50%; display: inline-grid; place-items: center; color: #fff; font-style: normal; font-size: 10px; font-weight: 700; }
+  .estado.bom i { background: var(--good); } .estado.atencao i { background: var(--warn); color: #0b0b0b; } .estado.ruim i { background: var(--crit); }
+
+
+  .legenda { display: flex; flex-wrap: wrap; gap: 4px 16px; color: var(--ink2); font-size: 12.5px; margin: 8px 0 4px; }
+  .legenda span { display: inline-flex; align-items: center; gap: 6px; }
+  .legenda .ln { width: 16px; height: 0; border-top: 2px solid var(--muted); }
+  .legenda .cx { width: 12px; height: 12px; border-radius: 3px; }
+  svg text { font-family: inherit; }
+  details { margin-top: 8px; color: var(--ink2); font-size: 12.5px; }
+  details summary { cursor: pointer; }
+
+  /* mapa em blocos */
+  .mapa { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; max-width: 400px; margin: 10px auto 0; }
+  .uf { aspect-ratio: 1; border: 0; border-radius: 6px; padding: 0; cursor: pointer; position: relative; display: grid; place-items: center; line-height: 1.1; overflow: hidden; }
+  .uf b { font-size: 12px; font-weight: 700; } .uf span { font-size: 10.5px; display: block; opacity: .9; }
+  .uf:hover, .uf:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
+  .uf.sel { outline: 3px solid var(--ink); outline-offset: 1px; }
+  .uf .prog { position: absolute; left: 0; bottom: 0; height: 3px; background: currentColor; opacity: .6; }
+  .escala { max-width: 400px; margin: 12px auto 0; font-size: 11.5px; color: var(--ink2); }
+  .escala .faixa { height: 8px; border-radius: 4px; }
+  .escala .rot { display: flex; justify-content: space-between; margin-top: 3px; }
+
+  /* filtros e tabela */
+  .filtros { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; }
+  .filtros label { color: var(--ink2); font-size: 12.5px; display: inline-flex; align-items: center; gap: 6px; }
+  .filtros select, .filtros input { border: 1px solid var(--border); background: var(--surface); border-radius: 8px; padding: 5px 9px; }
+  .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .seg button { border: 0; background: transparent; padding: 5px 11px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+  .seg button[aria-pressed="true"] { background: var(--wash); font-weight: 650; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th { text-align: right; font-weight: 600; color: var(--ink2); font-size: 12px; padding: 6px 6px; border-bottom: 1px solid var(--axis); white-space: nowrap; cursor: pointer; user-select: none; }
+  th:first-child, td:first-child { text-align: left; }
+  td { text-align: right; padding: 5px 6px; border-bottom: 1px solid var(--grid); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td:first-child { max-width: 190px; overflow: hidden; text-overflow: ellipsis; }
+  tr.grupo td { font-weight: 650; background: var(--wash); }
+  tr.clic { cursor: pointer; } tr.clic:hover td { background: var(--wash); }
+  .mini { display: inline-block; vertical-align: middle; width: 36px; height: 6px; border-radius: 3px; background: var(--grid); overflow: hidden; margin-right: 8px; }
+  .mini > i { display: block; height: 100%; background: var(--ink2); }
+  .parte { display: inline-flex; vertical-align: middle; width: 48px; height: 8px; gap: 2px; margin-left: 6px; }
+  .parte i { display: block; height: 100%; } .parte .pa { background: var(--a); border-radius: 3px 0 0 3px; } .parte .pb { background: var(--b); border-radius: 0 3px 3px 0; }
+  .rolagem { overflow-x: auto; }
+  .faltam .lin { display: grid; grid-template-columns: minmax(90px, 34%) 1fr auto; gap: 10px; align-items: center; padding: 4px 0; font-size: 13px; }
+  .faltam .lin .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .faltam .lin .nm small { color: var(--muted); }
+  .faltam .br { display: flex; gap: 2px; height: 14px; }
+  .faltam .br i { display: block; height: 100%; } .faltam .br .pa { background: var(--a); } .faltam .br .pb { background: var(--b); border-radius: 0 4px 4px 0; }
+  .faltam .v { font-variant-numeric: tabular-nums; color: var(--ink2); }
+  .faltam .lin:hover { background: var(--wash); }
+
+  .tip { position: fixed; z-index: 20; pointer-events: none; background: var(--surface); color: var(--ink); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 12.5px; box-shadow: 0 6px 20px rgba(0,0,0,.16); max-width: 300px; }
+  .tip .tt { color: var(--ink2); margin-bottom: 4px; }
+  .tip .r { display: flex; align-items: center; gap: 7px; white-space: nowrap; }
+  .tip .r b { font-weight: 650; } .tip .r span { color: var(--ink2); }
+  .tip .k { width: 12px; height: 0; border-top: 2px solid var(--muted); flex: none; }
+  .nota-pe { color: var(--muted); font-size: 12px; text-align: center; }
+
+  /* disposição da página */
+  #conteudo { display: grid; gap: 14px; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); align-items: start; grid-template-areas: "hero hero" "tiles tiles" "filt filt" "tab mapa" "tab falt" "comp comp" "pe pe"; grid-template-rows: auto auto auto auto 1fr auto auto; }
+  #conteudo[hidden] { display: none; }
+  #hero { grid-area: hero; display: grid; gap: 14px; } #tiles { grid-area: tiles; } #cardMapa { grid-area: mapa; } #filtros { grid-area: filt; } #cardTab { grid-area: tab; } #cardFalt { grid-area: falt; } #cardComp { grid-area: comp; } #pe { grid-area: pe; }
+  .comp3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px 32px; margin-top: 12px; }
+  .comp3 .val small { font-size: 12.5px; font-weight: 400; color: var(--ink2); margin-left: 6px; }
+  @media (max-width: 900px) { #conteudo { grid-template-columns: 1fr; grid-template-areas: none; grid-template-rows: none; } #conteudo > * { grid-area: auto; } }
+
+  .legenda .tr { width: 18px; height: 0; border-top: 2px dashed var(--muted); }
+  .legenda .risco { width: 0; height: 14px; border-left: 2px solid var(--ink); }
+  .halo { paint-order: stroke; stroke: var(--surface); stroke-width: 3.5px; stroke-linejoin: round; }
+
+  /* topo: apuração realizada, dado real do TSE e projeção, cada um no seu bloco com cabeçalho */
+  .trinca { display: grid; grid-template-columns: minmax(0, .64fr) minmax(0, 1fr) minmax(0, 1.12fr); gap: 14px; align-items: stretch; }
+  .bloco { padding: 0; overflow: hidden; display: flex; flex-direction: column; }
+  .bloco .cab { padding: 11px 18px 10px; background: color-mix(in srgb, var(--ink) 11%, var(--surface)); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 6px 14px; }
+  .bloco .cab .hora { text-align: right; font-size: 11.5px; color: var(--ink2); line-height: 1.25; white-space: nowrap; }
+  .bloco .cab .hora b { display: block; font-size: 17px; font-weight: 650; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .pl-cab { display: flex; justify-content: space-between; gap: 12px; font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--ink2); }
+  .bloco .cab h2 { font-size: 17px; font-weight: 750; letter-spacing: .05em; text-transform: uppercase; line-height: 1.2; display: flex; align-items: center; gap: 10px; }
+  .bloco .cab p { color: var(--ink2); font-size: 12.5px; margin-top: 2px; }
+  .bloco .cab .am { width: 22px; height: 0; border-top: 3px solid currentColor; flex: none; }   /* o mesmo traço do gráfico: cheio = TSE, tracejado = projeção */
+  .bloco .cab .am.tr { border-top-style: dashed; }
+  .bloco .corpo { padding: 12px 18px 16px; flex: 1; display: flex; flex-direction: column; }
+  .bloco.proj { border: 2px solid var(--ink); }
+  .bloco.proj .cab { background: var(--ink); color: var(--surface); border-bottom: 0; } .bloco.proj .cab p { color: var(--surface); opacity: .82; }
+  .apur .grande { font-size: clamp(38px, 4.4vw, 58px); font-weight: 650; line-height: 1.05; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .apur .grande small { display: block; font-size: 13px; font-weight: 400; color: var(--ink2); line-height: 1.4; margin-top: 2px; }
+  .apur .medidor { height: 14px; border-radius: 7px; margin-top: 12px; } .apur .medidor > i { background: var(--ink); border-radius: 7px 0 0 7px; }
+  .apur .esc { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .regs { margin-top: 14px; display: grid; gap: 5px; font-size: 12.5px; }
+  .regs .tit { color: var(--ink2); font-size: 12px; }
+  .regs .rg { display: grid; grid-template-columns: minmax(0, 1fr) minmax(40px, 76px) 46px; gap: 8px; align-items: center; }
+  .regs .rg .mini { display: block; width: 100%; margin: 0; }
+  .regs .rg b { font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+  .fatos { margin: auto 0 0; padding-top: 12px; display: grid; gap: 5px; font-size: 12.5px; }
+  .fatos div { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; border-top: 1px solid var(--grid); padding-top: 5px; }
+  .fatos dt { color: var(--ink2); } .fatos dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+  .pl { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 0 14px; padding: 8px 0 7px; border-bottom: 1px solid var(--grid); }
+  .pl .nome { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; }
+  .pl .pct { font-size: clamp(30px, 3.3vw, 42px); font-weight: 650; line-height: 1.1; text-align: right; color: var(--ink2); font-variant-numeric: tabular-nums; }
+  .pl.lider .pct { color: var(--ink); }
+  .proj .pl.lider .pct { font-size: clamp(38px, 4.4vw, 58px); }
+  .pl .det { grid-column: 1 / -1; color: var(--ink2); font-size: 12.5px; }
+  .plac-pe { margin-top: auto; padding-top: 12px; font-size: 13px; color: var(--ink2); } .plac-pe b { color: var(--ink); }
+  .bd { position: relative; height: 14px; display: flex; gap: 2px; margin-top: 16px; }
+  .bd i { display: block; height: 100%; } .bd .pa { background: var(--a); border-radius: 4px 0 0 4px; } .bd .pb { background: var(--b); border-radius: 0 4px 4px 0; }
+  .bd .meio { position: absolute; left: 50%; top: -5px; bottom: -5px; border-left: 2px solid var(--ink); }
+  .bd-rot { text-align: center; font-size: 11px; color: var(--muted); margin-top: 5px; }
+  .compo { margin-top: 16px; display: grid; gap: 8px; }
+  .compo .cl { display: grid; grid-template-columns: minmax(0, 1fr) 58px; gap: 10px; align-items: center; }
+  .compo .trilho { position: relative; height: 14px; }
+  .compo .enc { display: flex; gap: 2px; height: 100%; }
+  .compo .enc i { display: block; height: 100%; } .compo .ja { border-radius: 4px 0 0 4px; } .compo .esp { opacity: .34; border-radius: 0 4px 4px 0; }
+  .compo .meta { position: absolute; top: -4px; bottom: -4px; border-left: 2px solid var(--ink); }
+  .compo .vl { font-size: 12.5px; color: var(--ink2); font-variant-numeric: tabular-nums; text-align: right; }
+  .bloco .legenda { margin: 8px 0 0; font-size: 12px; }
+  /* tela média: a apuração vira uma faixa em cima dos dois placares; tela estreita: um bloco embaixo do outro */
+  @media (max-width: 1100px) {
+    .trinca { grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr); } .trinca .apur { grid-column: 1 / -1; }
+    .apur .corpo { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 24px; align-items: center; }
+    .apur .medidor { margin-top: 0; } .fatos { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 4px 26px; padding-top: 4px; } .fatos div { border-top: 0; padding-top: 0; }
+    .regs { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 4px 22px; margin-top: 6px; } .regs .tit { flex-basis: 100%; } .regs .rg { grid-template-columns: 88px 48px 46px; }
+  }
+  @media (max-width: 900px) { .trinca { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header class="topo">
+  <h1 id="titulo">Apuração</h1>
+  <span id="chip" class="chip">carregando</span>
+  <span id="info" class="info"></span>
+  <div class="direita">
+    <span id="relogio" class="info"></span>
+    <button id="btAtualizar" class="btn" hidden>Atualizar agora</button>
+    <button id="btReiniciar" class="btn" hidden title="Volta a demonstração para o começo da noite">Reiniciar</button>
+    <button id="btTema" class="btn" title="Alternar tema claro e escuro">Tema</button>
+  </div>
+</header>
+
+<main>
+  <div id="aviso" class="card aviso"><strong>Aguardando a primeira rodada…</strong>O painel se atualiza sozinho assim que a ferramenta gravar os dados.</div>
+
+  <div id="conteudo" hidden>
+    <section id="hero" aria-label="Apuração realizada, dado real do TSE, projeção e evolução"></section>
+    <section class="tiles" id="tiles" aria-label="Indicadores"></section>
+    <div class="card" id="cardMapa">
+      <h2>Projeção por UF</h2>
+      <p class="sub">Cor: vantagem projetada. Barra na base de cada bloco: quanto já foi apurado. Clique para detalhar.</p>
+      <div class="mapa" id="mapa"></div>
+      <div class="escala" id="escala"></div>
+    </div>
+    <section class="card filtros" id="filtros" aria-label="Filtros do detalhamento"></section>
+    <div class="card" id="cardTab">
+      <h2 id="tabTit">Detalhamento</h2>
+      <p class="sub" id="tabSub"></p>
+      <div class="rolagem" id="tabela" style="margin-top: 8px;"></div>
+    </div>
+    <div class="card" id="cardFalt">
+      <h2>Onde está o que falta apurar</h2>
+      <p class="sub" id="faltSub"></p>
+      <div class="legenda" id="faltLeg"></div>
+      <div class="faltam" id="faltam"></div>
+    </div>
+    <div class="card" id="cardComp" hidden>
+      <h2>Válidos, brancos/nulos e abstenções</h2>
+      <p class="sub" id="compSub"></p>
+      <div class="comp3" id="comp"></div>
+    </div>
+    <p class="nota-pe" id="pe"></p>
+  </div>
+</main>
+<div id="tip" class="tip" hidden></div>
+
+<script>
+'use strict';
+const UF_NOME = { ac: 'Acre', al: 'Alagoas', ap: 'Amapá', am: 'Amazonas', ba: 'Bahia', ce: 'Ceará', df: 'Distrito Federal', es: 'Espírito Santo', go: 'Goiás', ma: 'Maranhão', mt: 'Mato Grosso', ms: 'Mato Grosso do Sul', mg: 'Minas Gerais', pa: 'Pará', pb: 'Paraíba', pr: 'Paraná', pe: 'Pernambuco', pi: 'Piauí', rj: 'Rio de Janeiro', rn: 'Rio Grande do Norte', rs: 'Rio Grande do Sul', ro: 'Rondônia', rr: 'Roraima', sc: 'Santa Catarina', sp: 'São Paulo', se: 'Sergipe', to: 'Tocantins', zz: 'Exterior' };
+const REGIAO = { ac: 'Norte', am: 'Norte', ap: 'Norte', pa: 'Norte', ro: 'Norte', rr: 'Norte', to: 'Norte', al: 'Nordeste', ba: 'Nordeste', ce: 'Nordeste', ma: 'Nordeste', pb: 'Nordeste', pe: 'Nordeste', pi: 'Nordeste', rn: 'Nordeste', se: 'Nordeste', es: 'Sudeste', mg: 'Sudeste', rj: 'Sudeste', sp: 'Sudeste', pr: 'Sul', rs: 'Sul', sc: 'Sul', df: 'Centro-Oeste', go: 'Centro-Oeste', ms: 'Centro-Oeste', mt: 'Centro-Oeste', zz: 'Exterior' };
+const ORDEM_REG = ['Sudeste', 'Nordeste', 'Sul', 'Norte', 'Centro-Oeste', 'Exterior'];
+// mapa em blocos: [coluna, linha]
+const GRADE = { rr: [2, 0], ap: [3, 0], am: [1, 1], pa: [2, 1], ma: [3, 1], ce: [4, 1], rn: [5, 1], ac: [0, 2], ro: [1, 2], to: [2, 2], pi: [3, 2], pe: [4, 2], pb: [5, 2], mt: [1, 3], go: [2, 3], ba: [3, 3], se: [4, 3], al: [5, 3], ms: [1, 4], df: [2, 4], mg: [3, 4], es: [4, 4], sp: [2, 5], rj: [3, 5], pr: [2, 6], sc: [2, 7], rs: [2, 8], zz: [5, 8] };
+const NOITE = { '2022t2': 'noite do 2º turno de 2022', '2026t1': 'noite do 1º turno de 2026 (só os dois)' };
+
+const $ = s => document.querySelector(s);
+const NS = 'http://www.w3.org/2000/svg';
+function cria(ns, tag, props, kids) {
+  const e = ns ? document.createElementNS(ns, tag) : document.createElement(tag);
+  if (props) for (const k in props) {
+    const v = props[k]; if (v == null || v === false) continue;
+    if (k === 'class') e.setAttribute('class', v); else if (k === 'style') e.style.cssText = v;
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else e.setAttribute(k, v === true ? '' : v);
+  }
+  for (const c of kids.flat(3)) { if (c == null || c === false) continue; e.append(c.nodeType ? c : document.createTextNode(String(c))); }
+  return e;
+}
+const h = (tag, props, ...kids) => cria(null, tag, props, kids);
+const s = (tag, props, ...kids) => cria(NS, tag, props, kids);
+function limpa(el) { while (el.firstChild) el.firstChild.remove(); return el; }
+
+// números
+const nf = (min, max) => new Intl.NumberFormat('pt-BR', { minimumFractionDigits: min, maximumFractionDigits: max });
+const pct = (x, d = 2) => x == null || isNaN(x) ? '–' : nf(d, d).format(100 * x) + '%';
+const int = x => x == null || isNaN(x) ? '–' : nf(0, 0).format(Math.round(x));
+const curto = x => x >= 1e6 ? nf(1, 1).format(x / 1e6) + ' mi' : x >= 1e4 ? nf(0, 0).format(x / 1e3) + ' mil' : int(x);
+const pts = (x, d = 2) => x == null || isNaN(x) ? '–' : (x > 0 ? '+' : x < 0 ? '−' : '') + nf(d, d).format(Math.abs(100 * x));
+const semAcento = t => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+// o TSE grava os nomes sem acento; devolve o acento dos candidatos deste 2º turno
+const acentua = t => t.replace(/\bFlavio\b/g, 'Flávio');
+const primeiroNome = n => { const p = (n || '').trim().split(/\s+/); return p.length ? acentua(p[0].charAt(0) + p[0].slice(1).toLowerCase()) : ''; };
+const nomeBonito = n => acentua((n || '').toLowerCase().replace(/(^|[\s\-'])\S/g, c => c.toUpperCase()).replace(/\s(De|Da|Do|Das|Dos|E|D')(?=\s|[A-Z])/g, c => c.toLowerCase()));
+const nomeC = c => nomeBonito(c.nome);
+
+// cor: mistura em OKLab entre o cinza neutro e a cor do candidato
+function hexRgb(hx) { hx = hx.trim().replace('#', ''); if (hx.length === 3) hx = hx.split('').map(c => c + c).join(''); return [0, 2, 4].map(i => parseInt(hx.slice(i, i + 2), 16) / 255); }
+const lin = c => c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+const des = c => c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055;
+function oklab([r, g, b]) { r = lin(r); g = lin(g); b = lin(b); const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b), m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b), q = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b); return [0.2104542553 * l + 0.793617785 * m - 0.0040720468 * q, 1.9779984951 * l - 2.428592205 * m + 0.4505937099 * q, 0.0259040371 * l + 0.7827717662 * m - 0.808675766 * q]; }
+function rgbDe([L, A, B]) { const l = Math.pow(L + 0.3963377774 * A + 0.2158037573 * B, 3), m = Math.pow(L - 0.1055613458 * A - 0.0638541728 * B, 3), q = Math.pow(L - 0.0894841775 * A - 1.291485548 * B, 3); return [4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * q, -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * q, -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * q].map(c => Math.min(1, Math.max(0, des(c)))); }
+function mistura(hexA, hexB, t) { const a = oklab(hexRgb(hexA)), b = oklab(hexRgb(hexB)); const rgb = rgbDe(a.map((v, i) => v + (b[i] - v) * t)); const lum = 0.2126 * lin(rgb[0]) + 0.7152 * lin(rgb[1]) + 0.0722 * lin(rgb[2]); return { css: 'rgb(' + rgb.map(c => Math.round(255 * c)).join(',') + ')', texto: (1.05) / (lum + 0.05) >= (lum + 0.05) / 0.05 ? '#ffffff' : '#0b0b0b' }; }
+const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const LIMITE_COR = 0.40;   // vantagem de 40 pontos = cor cheia
+function corVantagem(m) { if (m == null || isNaN(m)) return { css: cssVar('--mid'), texto: cssVar('--ink') }; const t = Math.pow(Math.min(1, Math.abs(m) / LIMITE_COR), 0.75); return mistura(cssVar('--mid'), cssVar(m >= 0 ? '--a' : '--b'), t); }
+
+// dica flutuante
+const tip = $('#tip');
+function mostraTip(ev, titulo, linhas) {
+  limpa(tip); if (titulo) tip.append(h('div', { class: 'tt' }, titulo));
+  for (const l of linhas) { if (!l) continue; tip.append(h('div', { class: 'r' }, l.cor ? h('i', { class: 'k', style: 'border-color:' + l.cor + (l.trac ? ';border-top-style:dashed' : '') }) : null, h('b', null, l.valor), h('span', null, l.rotulo))); }
+  tip.hidden = false;
+  const r = tip.getBoundingClientRect(); let x = ev.clientX + 14, y = ev.clientY + 14;
+  if (x + r.width > innerWidth - 8) x = ev.clientX - r.width - 14; if (y + r.height > innerHeight - 8) y = ev.clientY - r.height - 14;
+  tip.style.left = Math.max(8, x) + 'px'; tip.style.top = Math.max(8, y) + 'px';
+}
+const escondeTip = () => { tip.hidden = true; };
+function comTip(el, fn) { el.addEventListener('pointermove', ev => { const [t, l] = fn(); mostraTip(ev, t, l); }); el.addEventListener('pointerleave', escondeTip); el.addEventListener('focus', () => { const r = el.getBoundingClientRect(); const [t, l] = fn(); mostraTip({ clientX: r.right, clientY: r.top }, t, l); }); el.addEventListener('blur', escondeTip); return el; }
+
+// ---------------------------------------------------------------------------------------------
+// dados
+// ---------------------------------------------------------------------------------------------
+let D = null, geradoAtual = '', pedidoEm = 0, chaveDisputa = '';
+const servido = location.protocol.startsWith('http');
+const sel = { cand: null, uf: '', busca: '', ordem: null, limite: 40 };
+
+function linha(id, nome, v) {
+  const [te, est, ac, vc, ar, vr, ba, bv] = v, tot = vc + vr;
+  return { id, nome, te, est, ac, vc, ar, vr, ba, bv, tot, apur: te > 0 ? Math.min(1, est / te) : 0, parc: vc > 0 ? ac / vc : null, proj: tot > 0 ? (ac + ar) / tot : null, base: bv > 0 ? ba / bv : null, rest: vr > 0 ? ar / vr : null };
+}
+function soma(nome, ls) { const v = [0, 0, 0, 0, 0, 0, 0, 0]; for (const l of ls) { v[0] += l.te; v[1] += l.est; v[2] += l.ac; v[3] += l.vc; v[4] += l.ar; v[5] += l.vr; v[6] += l.ba; v[7] += l.bv; } return linha(nome, nome, v); }
+function prepara(d) {
+  const o = { meta: d.meta || {}, a: d.a, b: d.b, nac: d.nac || {}, qual: d.qual || {}, hist: d.hist || [] };
+  o.ufs = (d.ufs || []).map(r => Object.assign(linha(r[0], UF_NOME[r[0]] || r[0].toUpperCase(), r.slice(1)), { uf: r[0] }));
+  o.muns = (d.muns || []).map(r => Object.assign(linha(r[0] + '|' + r[1], r[1], r.slice(2)), { uf: r[0] }));
+  o.regs = ORDEM_REG.map(n => soma(n, o.ufs.filter(u => REGIAO[u.uf] === n))).filter(r => r.te > 0);
+  o.porMun = o.muns.some(m => m.nome !== '(UF inteira)');
+  // comparecimento, abstenção, brancos, nulos e válidos (Brasil, só nas seções já apuradas) vêm como texto no meta e podem faltar
+  const ex = ['comp', 'abst', 'brancos', 'nulos', 'validos'].map(k => parseFloat(o.meta[k]));
+  o.comp = ex.every(x => isFinite(x)) && ex[0] > 0 ? { comp: ex[0], abst: ex[1], brancos: ex[2], nulos: ex[3], validos: ex[4] } : null;
+  const n = o.nac; n.vc = (n.ac || 0) + (n.bc || 0); n.tot = n.vc + (n.vr || 0); n.parc = n.vc > 0 ? n.ac / n.vc : null; n.apur = n.eleTot > 0 ? n.eleC / n.eleTot : 0; n.rest = n.vr > 0 ? n.ar / n.vr : null;
+  return o;
+}
+// tudo é guardado na ótica do candidato A; v() devolve na ótica do candidato escolhido
+const v = x => x == null ? null : (sel.cand === 'b' ? 1 - x : x);
+const cand = () => sel.cand === 'b' ? D.b : D.a;
+function pintaCandidatos() {
+  const r = document.documentElement, a = D.a.num, b = D.b.num;
+  const ca = a === 13 ? 'red' : 'blue', cb = b === 13 ? 'red' : (a === 13 ? 'blue' : 'orange');
+  r.dataset.ca = ca; r.dataset.cb = cb;
+}
+
+// ---------------------------------------------------------------------------------------------
+// desenho
+// ---------------------------------------------------------------------------------------------
+function desenha() {
+  // redesenhar esvazia e refaz os blocos; guarda a rolagem para a pagina nao pular a cada atualizacao
+  const rolX = scrollX, rolY = scrollY;
+  try { desenhaTudo(); } finally { scrollTo(rolX, rolY); }
+}
+function desenhaTudo() {
+  const m = D.meta; pintaCandidatos();
+  $('#titulo').textContent = m.modo === 'demo' ? 'Presidente · demonstração' : 'Presidente 2026 · ' + (m.modo === 'vivo' ? '2º turno' : 'ensaio');
+  $('#btAtualizar').hidden = !(servido && m.modo !== 'demo' && parseFloat(m.loopMin) > 0);
+  $('#btReiniciar').hidden = !(servido && m.modo === 'demo');
+  document.title = primeiroNome(D.a.nome) + ' × ' + primeiroNome(D.b.nome) + ' · painel da apuração';
+  const chip = $('#chip'); chip.className = 'chip' + (m.modo === 'vivo' ? ' vivo' : '');
+  chip.textContent = m.modo === 'vivo' ? 'ao vivo' : m.modo === 'ensaio' ? 'ensaio com o 1º turno' : 'demonstração: ' + (NOITE[m.noite] || '') + (m.passo ? ' · passo ' + m.passo : '');
+  // a hora dos dados fica no bloco "Dado real · TSE"; aqui em cima só aparece enquanto não há votos
+  $('#info').textContent = '';
+  $('#aviso').hidden = true; $('#conteudo').hidden = false; $('#conteudo').classList.remove('opaco');
+
+  if (m.estado === 'sem_votos' || D.nac.proj == null) {
+    $('#info').textContent = m.dadosAte ? 'dados do TSE até ' + m.dadosAte.slice(-8) : '';
+    $('#conteudo').hidden = true; const av = limpa($('#aviso')); av.hidden = false;
+    av.append(h('strong', null, 'Ainda não há votos apurados'), 'No 1º turno, contando só os dois: ' + nomeC(D.a) + ' ' + pct(D.nac.base) + ' × ' + nomeC(D.b) + ' ' + pct(1 - D.nac.base) + '.');
+    return;
+  }
+  if (!sel.cand) sel.cand = D.nac.proj >= 0.5 ? 'a' : 'b';
+  if (sel.uf && !D.ufs.some(u => u.uf === sel.uf)) sel.uf = '';
+  desenhaHero(); desenhaTiles(); desenhaMapa(); desenhaFiltros(); desenhaDetalhe(); desenhaComparecimento();
+  $('#pe').textContent = 'Projeção própria a partir dos dados oficiais do TSE; não é resultado oficial. Percentuais dos candidatos sobre os votos válidos (sem brancos e nulos). Intervalo de 95% obtido por simulação.';
+}
+
+// válidos, brancos/nulos e abstenção no Brasil, só do que já foi apurado; some se a coleta não mandou esses totais
+function desenhaComparecimento() {
+  const card = $('#cardComp'), c = D.comp; card.hidden = !c; if (!c) return;
+  const n = D.nac, el = limpa($('#comp')), ele = c.comp + c.abst, bn = c.brancos + c.nulos;
+  const item = (rot, share, base, nota) => h('div', { class: 'tile' }, h('div', { class: 'rot' }, rot), h('div', { class: 'val' }, pct(share, 1), h('small', null, base)),
+    h('div', { class: 'medidor', role: 'img', 'aria-label': pct(share, 1) + ' ' + base }, h('i', { style: 'width:' + (100 * Math.min(1, share)).toFixed(2) + '%' })), h('div', { class: 'nota' }, nota));
+  el.append(
+    item('Votos válidos', c.validos / c.comp, 'dos votos', int(c.validos) + ' votos. É sobre eles que se calculam os percentuais dos candidatos.'),
+    item('Brancos e nulos', bn / c.comp, 'dos votos', int(bn) + ' votos: brancos ' + pct(c.brancos / c.comp, 1) + ' e nulos ' + pct(c.nulos / c.comp, 1) + '.'),
+    item('Abstenção', c.abst / ele, 'do eleitorado', int(c.abst) + ' eleitores não votaram; compareceram ' + int(c.comp) + ' (' + pct(c.comp / ele, 1) + ').'));
+  let sub = 'Brasil, dado real do TSE, só nas seções já apuradas (' + pct(n.apur, 1) + ' do eleitorado).';
+  if (n.vc > 0 && Math.abs(c.validos - n.vc) > 0.01 * c.validos) sub += ' Aqui os válidos incluem todos os candidatos; no topo contam só os dois da disputa.';
+  $('#compSub').textContent = sub;
+}
+
+function desenhaTiles() {
+  const n = D.nac, q = D.qual, el = limpa($('#tiles'));
+  const tile = (rot, val, nota, extra) => h('div', { class: 'card tile' }, h('div', { class: 'rot' }, rot), h('div', { class: 'val' }, val), extra, nota ? h('div', { class: 'nota' }, nota) : null);
+  // o quanto já foi apurado fica no bloco "Apuração realizada", no topo
+  el.append(tile('Votos válidos a apurar', n.vr > 0 ? curto(n.vr) : 'nenhum', n.vr > 0 ? 'o modelo espera ' + nomeC(D.a) + ' ' + pct(n.rest, 1) + ' × ' + nomeC(D.b) + ' ' + pct(1 - n.rest, 1) : 'apuração encerrada'));
+  // virada
+  if (n.vr > 0) {
+    const empate = (0.5 * n.tot - n.ac) / n.vr, atrasA = n.proj < 0.5, precisa = atrasA ? empate : 1 - empate, previsto = atrasA ? n.rest : 1 - n.rest, quem = nomeC(atrasA ? D.a : D.b);
+    el.append(precisa > 1 ? tile('Para virar', 'impossível', quem + ' precisaria de mais de 100% do que falta') : tile('Para virar, ' + quem + ' precisa de', pct(precisa, 1), 'do que falta; o modelo prevê ' + pct(previsto, 1)));
+  } else el.append(tile('Para virar', 'encerrado', 'não há mais votos a apurar'));
+  // seções identificadas (estado)
+  const id = q.ident, cls = id >= 0.95 ? 'bom' : id >= 0.80 ? 'atencao' : 'ruim';
+  const txt = id >= 0.95 ? 'método por seção valendo' : id >= 0.80 ? 'identificação parcial' : 'modo antigo (rateio)';
+  const situ = q.dif > 0.01 ? 'arquivo de seções adiantado, o que não atrapalha' : q.dif < -0.01 ? 'arquivo de seções atrasado em relação aos totais' : 'arquivo de seções em dia';
+  el.append(tile('Seções identificadas', pct(id, 1), situ, h('div', { class: 'estado ' + cls }, h('i', null, cls === 'bom' ? '✓' : cls === 'atencao' ? '!' : '×'), txt)));
+  el.append(q.erroNovo == null ? tile('Conferência', '–', 'aparece a partir da segunda rodada') : tile('Erro no que acabou de chegar', pts(q.erroNovo) + ' pt', 'previsão anterior × votos que entraram' + (q.votosNovos > 0 ? ' (' + curto(q.votosNovos) + ')' : '')));
+}
+
+function dicaLocal(l, titulo) {
+  const A = nomeC(D.a), B = nomeC(D.b);
+  return [titulo + ' · ' + pct(l.apur, 1) + ' apurado', [
+    l.proj != null ? { cor: cssVar('--a'), valor: pct(l.proj), rotulo: A + ' (projeção)' } : null,
+    l.proj != null ? { cor: cssVar('--b'), valor: pct(1 - l.proj), rotulo: B + ' (projeção)' } : null,
+    l.parc != null ? { valor: pct(l.parc) + ' × ' + pct(1 - l.parc), rotulo: 'placar agora' } : null,
+    l.base != null && l.proj != null ? { valor: pts(v(l.proj) - v(l.base)) + ' pt', rotulo: nomeC(cand()) + ' em relação ao 1º turno' } : null,
+    { valor: curto(l.vr), rotulo: 'votos a apurar' }]];
+}
+
+function desenhaMapa() {
+  const el = limpa($('#mapa')), porUf = {}; D.ufs.forEach(u => porUf[u.uf] = u);
+  for (const uf in GRADE) {
+    const u = porUf[uf]; if (!u) continue; const [cx, cy] = GRADE[uf];
+    const mg = u.proj == null ? null : 2 * u.proj - 1, c = corVantagem(mg), lider = mg == null ? '' : nf(0, 0).format(100 * Math.max(u.proj, 1 - u.proj)) + '%';
+    const bt = h('button', { class: 'uf' + (sel.uf === uf ? ' sel' : ''), style: 'grid-column:' + (cx + 1) + ';grid-row:' + (cy + 1) + ';background:' + c.css + ';color:' + c.texto, 'aria-label': u.nome, 'aria-pressed': sel.uf === uf ? 'true' : 'false', onclick: () => { sel.uf = sel.uf === uf ? '' : uf; sel.limite = 40; desenhaMapa(); desenhaFiltros(); desenhaDetalhe(); } },
+      h('div', null, h('b', null, uf === 'zz' ? 'EXT' : uf.toUpperCase()), h('span', null, lider)), h('i', { class: 'prog', style: 'width:' + (100 * u.apur).toFixed(1) + '%' }));
+    comTip(bt, () => dicaLocal(u, u.nome)); el.append(bt);
+  }
+  const esc = limpa($('#escala')), paradas = [];
+  for (let i = 0; i <= 10; i++) { const mg = -LIMITE_COR + i * (2 * LIMITE_COR / 10); paradas.push(corVantagem(mg).css + ' ' + (i * 10) + '%'); }
+  esc.append(h('div', { class: 'faixa', style: 'background: linear-gradient(to right, ' + paradas.join(', ') + ')' }), h('div', { class: 'rot' }, h('span', null, nomeC(D.b) + ' +' + (100 * LIMITE_COR) + ' ou mais'), h('span', null, 'empate'), h('span', null, nomeC(D.a) + ' +' + (100 * LIMITE_COR) + ' ou mais')));
+}
+
+function desenhaFiltros() {
+  const ativo = document.activeElement, digitando = ativo && ativo.type === 'search' && ativo.closest('#filtros');
+  const el = limpa($('#filtros'));
+  const sl = h('select', { 'aria-label': 'UF', onchange: ev => { sel.uf = ev.target.value; sel.limite = 40; desenhaMapa(); desenhaDetalhe(); } }, h('option', { value: '' }, 'Brasil'), D.ufs.slice().sort((p, q) => p.nome.localeCompare(q.nome, 'pt-BR')).map(u => h('option', { value: u.uf, selected: sel.uf === u.uf }, u.nome)));
+  el.append(h('label', null, 'Recorte', sl));
+  const bt = (k, c) => h('button', { 'aria-pressed': sel.cand === k ? 'true' : 'false', onclick: () => { sel.cand = k; desenhaHero(); desenhaFiltros(); desenhaDetalhe(); } }, h('i', { class: 'sw ' + k }), nomeC(c));
+  el.append(h('label', null, 'Percentuais de', h('span', { class: 'seg' }, bt('a', D.a), bt('b', D.b))));
+  if (D.porMun) {
+    const inp = h('input', { type: 'search', placeholder: 'buscar…', value: sel.busca, oninput: ev => { sel.busca = ev.target.value; sel.limite = 40; desenhaDetalhe(); } });
+    el.append(h('label', null, 'Município', inp));
+    if (digitando) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
+  }
+}
+
+function desenhaDetalhe() {
+  const nomeCand = nomeC(cand()), busca = D.porMun ? semAcento(sel.busca.trim()) : '';
+  let grupos = [], linhas = [], titulo = 'Regiões e UFs', sub = '';
+  const munsEsc = D.muns.filter(m => (!sel.uf || m.uf === sel.uf) && m.nome !== '(UF inteira)');
+  if (busca) { linhas = munsEsc.filter(m => semAcento(m.nome).includes(busca)); titulo = 'Municípios com “' + sel.busca.trim() + '”'; }
+  else if (sel.uf) { grupos = D.ufs.filter(u => u.uf === sel.uf); linhas = munsEsc; titulo = (UF_NOME[sel.uf] || sel.uf.toUpperCase()) + ': municípios'; if (!linhas.length) sub = 'Nesta rodada esta UF entrou pelo total, sem detalhe por município.'; }
+  else { grupos = D.regs; linhas = D.ufs; }
+  const cols = [
+    { k: 'nome', t: 'Local', f: l => l.nome, txt: true }, { k: 'apur', t: 'Apurado', f: l => l.apur }, { k: 'parc', t: 'Placar', f: l => v(l.parc) },
+    { k: 'proj', t: 'Projeção', f: l => v(l.proj) }, { k: 'sw', t: 'vs 1º turno', f: l => l.proj == null || l.base == null ? null : v(l.proj) - v(l.base) }, { k: 'vr', t: 'A apurar', f: l => l.vr }];
+  const ord = sel.ordem || { k: linhas === D.ufs ? 'tot' : 'vr', d: -1 };
+  const chave = ord.k === 'tot' ? (l => l.tot) : cols.find(c => c.k === ord.k).f;
+  linhas = linhas.slice().sort((p, q) => { const a = chave(p), b = chave(q); if (typeof a === 'string') return ord.d * a.localeCompare(b, 'pt-BR'); return ord.d * ((a == null ? -1e9 : a) - (b == null ? -1e9 : b)); });
+  const total = linhas.length; linhas = linhas.slice(0, sel.limite);
+  $('#tabTit').textContent = titulo; $('#tabSub').textContent = sub || ('% dos votos válidos de ' + nomeCand + '. ' + (total > linhas.length ? 'Mostrando ' + linhas.length + ' de ' + int(total) + '. ' : '') + 'Clique no cabeçalho para ordenar.');
+  const celulas = (l, rotulo) => [
+    h('td', null, rotulo),
+    h('td', null, h('span', { class: 'mini' }, h('i', { style: 'width:' + (100 * l.apur).toFixed(1) + '%' })), pct(l.apur, 1)),
+    h('td', null, pct(v(l.parc))),
+    h('td', null, h('b', null, pct(v(l.proj))), l.proj == null ? null : h('span', { class: 'parte', title: '' }, h('i', { class: 'pa', style: 'width:calc(' + (100 * l.proj).toFixed(1) + '% - 1px)' }), h('i', { class: 'pb', style: 'width:calc(' + (100 * (1 - l.proj)).toFixed(1) + '% - 1px)' }))),
+    h('td', null, l.proj == null || l.base == null ? '–' : (v(l.proj) - v(l.base) >= 0 ? '▲ ' : '▼ ') + nf(2, 2).format(Math.abs(100 * (v(l.proj) - v(l.base))))),
+    h('td', null, l.vr > 0 ? int(l.vr) : '–')];
+  const cab = h('tr', null, cols.map(c => h('th', { 'aria-sort': ord.k === c.k ? (ord.d > 0 ? 'ascending' : 'descending') : null, onclick: () => { sel.ordem = { k: c.k, d: ord.k === c.k ? -ord.d : (c.txt ? 1 : -1) }; desenhaDetalhe(); } }, c.t + (ord.k === c.k ? (ord.d > 0 ? ' ↑' : ' ↓') : ''))));
+  const corpo = h('tbody', null, grupos.map(l => h('tr', { class: 'grupo' }, celulas(l, l.nome))), linhas.map(l => { const eUf = linhas[0] && D.ufs.includes(l); return comTip(h('tr', { class: eUf ? 'clic' : null, onclick: eUf ? () => { sel.uf = l.uf; sel.limite = 40; sel.ordem = null; desenhaMapa(); desenhaFiltros(); desenhaDetalhe(); } : null }, celulas(l, eUf ? l.nome : nomeBonito(l.nome) + (sel.uf ? '' : ' (' + l.uf.toUpperCase() + ')'))), () => dicaLocal(l, eUf ? l.nome : nomeBonito(l.nome))); }));
+  const tb = limpa($('#tabela')); tb.append(h('table', null, h('thead', null, cab), corpo));
+  if (total > linhas.length) tb.append(h('p', { style: 'margin-top:8px' }, h('button', { class: 'btn', onclick: () => { sel.limite += 60; desenhaDetalhe(); } }, 'Mostrar mais')));
+
+  // onde está o que falta
+  let falt = (D.porMun ? munsEsc : D.ufs.filter(u => !sel.uf || u.uf === sel.uf)).filter(l => l.vr > 0).sort((p, q) => q.vr - p.vr).slice(0, 12);
+  const fl = limpa($('#faltam')), lg = limpa($('#faltLeg')), totalFalta = (sel.uf ? D.ufs.filter(u => u.uf === sel.uf) : D.ufs).reduce((t, u) => t + u.vr, 0);
+  $('#faltSub').textContent = totalFalta > 0 ? 'Os ' + falt.length + ' maiores volumes de ' + curto(totalFalta) + ' votos a apurar' + (sel.uf ? ' em ' + (UF_NOME[sel.uf] || '') : '') + ', divididos como o modelo espera.' : 'Não há votos a apurar neste recorte.';
+  if (falt.length) lg.append(h('span', null, h('i', { class: 'cx', style: 'background:var(--a)' }), nomeC(D.a)), h('span', null, h('i', { class: 'cx', style: 'background:var(--b)' }), nomeC(D.b)));
+  const mx = falt.length ? falt[0].vr : 1;
+  for (const l of falt) {
+    const larg = 100 * l.vr / mx, pa = l.rest == null ? 0.5 : l.rest;
+    fl.append(comTip(h('div', { class: 'lin', tabindex: 0 },
+      h('div', { class: 'nm' }, nomeBonito(l.nome), !sel.uf && D.porMun ? h('small', null, ' ' + l.uf.toUpperCase()) : null),
+      h('div', { class: 'br', style: 'width:' + larg.toFixed(1) + '%' }, h('i', { class: 'pa', style: 'width:calc(' + (100 * pa).toFixed(1) + '% - 1px)' }), h('i', { class: 'pb', style: 'width:calc(' + (100 * (1 - pa)).toFixed(1) + '% - 1px)' })),
+      h('div', { class: 'v' }, curto(l.vr))), () => [nomeBonito(l.nome) + ' · ' + pct(l.apur, 1) + ' apurado', [{ valor: int(l.vr), rotulo: 'votos a apurar' }, { cor: cssVar('--a'), valor: pct(pa, 1), rotulo: nomeC(D.a) + ' esperado no que falta' }, { cor: cssVar('--b'), valor: pct(1 - pa, 1), rotulo: nomeC(D.b) + ' esperado no que falta' }]]));
+  }
+}
+
+
+// ---------------------------------------------------------------------------------------------
+// topo (apuração realizada, dado real do TSE e projeção) e gráfico da evolução
+// em tudo: traço cheio = dado real do TSE; tracejado = projeção
+// ---------------------------------------------------------------------------------------------
+let detAberto = false;
+const f2 = x => x == null || isNaN(x) ? '–' : nf(2, 2).format(x) + '%';   // para valores que já estão em 0–100
+const chanceTxt = p => p == null || isNaN(p) ? '–' : p >= 99.5 ? '> 99%' : p <= 0.5 ? '< 1%' : nf(0, 0).format(p) + '%';
+
+// rodadas na ótica do candidato escolhido (percentuais 0–100)
+function rodadas() {
+  const b = sel.cand === 'b', inv = x => x == null ? null : (b ? 100 - x : x);
+  return D.hist.filter(r => r[3] != null).map(r => ({ hora: r[0], x: r[1], parc: inv(r[2]), proj: inv(r[3]), lo: b ? 100 - r[5] : r[4], hi: b ? 100 - r[4] : r[5], prob: inv(r[7]) }));
+}
+// no começo da apuração o placar oficial oscila muito e achata a escala: os gráficos novos partem de 3% apurado (as tabelas mostram tudo)
+const X_MIN = 3;
+const paraGrafico = rs => { const t = rs.filter(r => r.x >= X_MIN); return t.length >= 2 ? t : rs; };
+function fraseChance() {
+  const n = D.nac, liderA = n.proj >= 0.5, p = liderA ? n.prob : 1 - n.prob, nm = nomeC(liderA ? D.a : D.b);
+  if (!(n.vr > 0)) return 'Apuração encerrada';
+  return p >= 0.995 ? nm + ' vence em mais de 99% das simulações' : p >= 0.9 ? nm + ' vence em ' + nf(1, 1).format(100 * p) + '% das simulações' : 'Disputa em aberto: ' + nm + ' vence em ' + nf(0, 0).format(100 * p) + '% das simulações';
+}
+function detalhes(rotulo, conteudo) {
+  const d = h('details', { open: detAberto }, h('summary', null, rotulo), h('div', { class: 'rolagem' }, conteudo));
+  d.addEventListener('toggle', () => { detAberto = d.open; }); return d;
+}
+function tabelaRodadas() {
+  return h('table', null, h('thead', null, h('tr', null, ['Hora', 'Apurado', 'Dado real (TSE)', 'Projeção', 'Intervalo de 95%', 'Chance'].map(t => h('th', { style: 'cursor:default' }, t)))),
+    h('tbody', null, rodadas().reverse().map(r => h('tr', null, h('td', null, r.hora), h('td', null, nf(1, 1).format(r.x) + '%'), h('td', null, f2(r.parc)), h('td', null, f2(r.proj)), h('td', null, f2(r.lo) + ' a ' + f2(r.hi)), h('td', null, chanceTxt(r.prob))))));
+}
+
+// base dos gráficos novos: horizontal = % do eleitorado apurado (0 a 100), grade e eixos discretos
+function baseGrafico(el, o) {
+  const W = Math.max(320, el.clientWidth), H = o.alt, m = Object.assign({ l: 48, r: 18, t: 12, b: 44 }, o.m);
+  let y0 = Math.min(...o.vals), y1 = Math.max(...o.vals); const folga = Math.max(0.4, (y1 - y0) * 0.09); y0 -= folga; y1 += folga;
+  if (o.centro != null) { const d = Math.max(o.centro - y0, y1 - o.centro); y0 = o.centro - d; y1 = o.centro + d; }
+  const passo = [0.25, 0.5, 1, 2, 5, 10, 20].find(p => (y1 - y0) / p <= 8) || 50; y0 = Math.floor(y0 / passo) * passo; y1 = Math.ceil(y1 / passo) * passo;
+  const X = x => m.l + x / 100 * (W - m.l - m.r), Y = y => m.t + (y1 - y) / (y1 - y0) * (H - m.t - m.b);
+  const g = s('svg', { width: W, height: H, viewBox: '0 0 ' + W + ' ' + H, tabindex: 0, role: 'img', 'aria-label': o.rotulo, style: 'display:block' });
+  const gr = { g, W, H, m, X, Y, y0, y1 };
+  let temRef = false;
+  for (let t = y0; t <= y1 + 1e-9; t += passo) {
+    const ref = o.ref != null && Math.abs(t - o.ref) < 1e-9; temRef = temRef || ref;
+    g.append(s('line', { x1: m.l, x2: W - m.r, y1: Y(t), y2: Y(t), stroke: cssVar(ref ? '--muted' : '--grid') }));
+    g.append(s('text', { x: m.l - 7, y: Y(t) + 4, 'font-size': 11, fill: cssVar('--muted'), 'text-anchor': 'end' }, o.fmtY(t)));
+  }
+  if (o.ref != null && !temRef && o.ref > y0 && o.ref < y1) g.append(s('line', { x1: m.l, x2: W - m.r, y1: Y(o.ref), y2: Y(o.ref), stroke: cssVar('--muted') }));
+  for (let t = 0; t <= 100; t += 20) g.append(s('text', { x: X(t), y: H - m.b + 16, 'font-size': 11, fill: cssVar('--muted'), 'text-anchor': 'middle' }, t + '%'));
+  g.append(s('line', { x1: m.l, x2: W - m.r, y1: H - m.b, y2: H - m.b, stroke: cssVar('--axis') }));
+  g.append(s('text', { x: (m.l + W - m.r) / 2, y: H - 7, 'font-size': 11.5, fill: cssVar('--ink2'), 'text-anchor': 'middle' }, '% do eleitorado já apurado' + (o.corte ? ' (gráfico a partir de ' + X_MIN + '%)' : '')));
+  el.append(g);
+  return gr;
+}
+// mira: linha vertical na rodada mais próxima do ponteiro, com os pontos e a dica
+function poeMira(gr, rs, pontos, dica) {
+  const { g, X, Y, W, H, m } = gr, fio = s('line', { y1: m.t, y2: H - m.b, stroke: cssVar('--muted'), visibility: 'hidden' }), bolas = []; g.append(fio);
+  let foco = rs.length - 1;
+  const aponta = (i, ev) => {
+    foco = i; const r = rs[i], ps = pontos(r).filter(p => p.y != null);
+    fio.setAttribute('x1', X(r.x)); fio.setAttribute('x2', X(r.x)); fio.setAttribute('visibility', 'visible');
+    while (bolas.length < ps.length) { const c = s('circle', { r: 5, stroke: cssVar('--surface'), 'stroke-width': 2 }); bolas.push(c); g.append(c); }
+    bolas.forEach((c, k) => { const p = ps[k]; if (!p) { c.setAttribute('visibility', 'hidden'); return; } c.setAttribute('cx', X(r.x)); c.setAttribute('cy', Y(p.y)); c.setAttribute('fill', p.cor); c.setAttribute('visibility', 'visible'); });
+    const d = dica(r); mostraTip(ev, d[0], d[1]);
+  };
+  const some = () => { fio.setAttribute('visibility', 'hidden'); bolas.forEach(c => c.setAttribute('visibility', 'hidden')); escondeTip(); };
+  g.addEventListener('pointermove', ev => { const bx = g.getBoundingClientRect(), px = (ev.clientX - bx.left) * (W / bx.width); let bi = 0, bd = 1e9; rs.forEach((r, i) => { const d = Math.abs(X(r.x) - px); if (d < bd) { bd = d; bi = i; } }); aponta(bi, ev); });
+  g.addEventListener('pointerleave', some); g.addEventListener('blur', some);
+  g.addEventListener('keydown', ev => { if (ev.key !== 'ArrowLeft' && ev.key !== 'ArrowRight') return; ev.preventDefault(); const i = Math.min(rs.length - 1, Math.max(0, foco + (ev.key === 'ArrowLeft' ? -1 : 1))), bx = g.getBoundingClientRect(); aponta(i, { clientX: bx.left + X(rs[i].x) * bx.width / W, clientY: bx.top + 40 }); });
+}
+// rótulos no fim das linhas, afastados uns dos outros quando os pontos ficam próximos
+function rotulosFim(gr, x, itens) {
+  const { g, m, H } = gr, gap = 16, its = itens.filter(i => i && i.y != null && !isNaN(i.y)).sort((p, q) => p.y - q.y);
+  its.forEach((it, k) => { it.yy = Math.max(it.y, m.t + 8); if (k && it.yy - its[k - 1].yy < gap) it.yy = its[k - 1].yy + gap; });
+  for (let k = its.length - 1; k >= 0; k--) { const teto = k === its.length - 1 ? H - m.b - 6 : its[k + 1].yy - gap; if (its[k].yy > teto) its[k].yy = teto; }
+  for (const it of its) {
+    if (it.cor) g.append(s('rect', { x, y: it.yy - 5, width: 9, height: 9, rx: 2, fill: it.cor }));
+    g.append(s('text', { class: 'halo', x: x + (it.cor ? 13 : 0), y: it.yy + 4, 'font-size': 12, 'font-weight': it.forte ? 650 : 400, fill: cssVar(it.forte ? '--ink' : '--ink2') }, it.txt));
+  }
+}
+const caminho = (gr, pts) => 'M' + pts.map(p => gr.X(p[0]).toFixed(1) + ',' + gr.Y(p[1]).toFixed(1)).join('L');
+
+// ---- topo: três blocos (quanto foi apurado, o que o TSE já contou, como deve terminar) e o gráfico da evolução ----
+function desenhaHero() {
+  const el = limpa($('#hero')); escondeTip();
+  const n = D.nac, A = D.a, B = D.b, vA = n.ac + n.ar, vB = n.tot - vA, liderA = n.proj >= 0.5, ofA = n.parc >= 0.5;
+  const bloco = (cls, titulo, sub, amostra, corpo, lado) => h('section', { class: 'card bloco ' + cls, 'aria-label': titulo },
+    h('div', { class: 'cab' }, h('div', null, h('h2', null, amostra ? h('i', { class: 'am' + (amostra === 'tr' ? ' tr' : '') }) : null, titulo), h('p', null, sub)), lado),
+    h('div', { class: 'corpo' }, corpo));
+  // os percentuais dos candidatos são sempre sobre os votos válidos: o cabeçalho da coluna diz isso em cima dos números
+  const colunas = () => h('div', { class: 'pl-cab' }, h('span', null, 'Candidato'), h('span', null, '% dos votos válidos'));
+  const lin = (c, k, share, det, lider) => h('div', { class: 'pl' + (lider ? ' lider' : '') }, h('div', { class: 'nome' }, h('i', { class: 'sw ' + k }), nomeC(c) + ' (' + c.num + ')'), h('div', { class: 'pct' }, pct(share)), h('div', { class: 'det' }, det));
+  const fato = (rot, val) => h('div', null, h('dt', null, rot), h('dd', null, val));
+
+  const apuracao = bloco('apur', 'Apuração realizada', 'quanto do eleitorado já foi contado', null, [
+    h('div', { class: 'grande' }, pct(n.apur, 1), h('small', null, 'do eleitorado')),
+    h('div', null, h('div', { class: 'medidor', role: 'img', 'aria-label': pct(n.apur, 1) + ' do eleitorado apurado' }, h('i', { style: 'width:' + (100 * n.apur).toFixed(2) + '%' })), h('div', { class: 'esc' }, h('span', null, '0%'), h('span', null, '100%'))),
+    // onde a apuração está adiantada ou atrasada ajuda a entender por que o dado real ainda difere da projeção
+    h('div', { class: 'regs' }, h('div', { class: 'tit' }, 'Por região'), D.regs.filter(r => r.nome !== 'Exterior').map(r => h('div', { class: 'rg' }, h('span', null, r.nome), h('span', { class: 'mini', role: 'img', 'aria-label': pct(r.apur, 1) + ' apurado' }, h('i', { style: 'width:' + (100 * r.apur).toFixed(1) + '%' })), h('b', null, pct(r.apur, 1))))),
+    h('dl', { class: 'fatos' }, fato('Seções apuradas', int(n.secC) + ' de ' + int(n.secTot)), fato('Votos válidos contados', curto(n.vc)))]);
+
+  const real = bloco('real', 'Dado real · TSE', 'placar oficial, só com os votos já contados', 'ln', [
+    colunas(), lin(A, 'a', n.parc, int(n.ac) + ' votos', ofA), lin(B, 'b', 1 - n.parc, int(n.bc) + ' votos', !ofA),
+    h('div', { class: 'bd', role: 'img', 'aria-label': 'Divisão dos votos válidos já apurados' }, h('i', { class: 'pa', style: 'width:calc(' + (100 * n.parc).toFixed(2) + '% - 1px)' }), h('i', { class: 'pb', style: 'width:calc(' + (100 * (1 - n.parc)).toFixed(2) + '% - 1px)' }), h('i', { class: 'meio' })),
+    h('div', { class: 'bd-rot' }, '50%'),
+    h('p', { class: 'plac-pe' }, h('b', null, nomeC(ofA ? A : B) + ' na frente'), ' por ' + int(Math.abs(n.ac - n.bc)) + ' votos (' + nf(2, 2).format(Math.abs(100 * (2 * n.parc - 1))) + ' pt).')],
+    D.meta.dadosAte ? h('div', { class: 'hora' }, 'dados do TSE até', h('b', null, D.meta.dadosAte.slice(-8))) : null);
+
+  // de onde vem a projeção: o que já foi contado mais o que o modelo espera do que falta
+  const mx = Math.max(vA, vB), barra = (k, ja, tot) => h('div', { class: 'cl' },
+    h('div', { class: 'trilho' }, h('div', { class: 'enc', style: 'width:' + (100 * tot / mx).toFixed(2) + '%' }, h('i', { class: 'ja', style: 'background:var(--' + k + ');flex:' + Math.max(1, Math.round(ja)) }), tot - ja > 0.5 ? h('i', { class: 'esp', style: 'background:var(--' + k + ');flex:' + Math.round(tot - ja) }) : null), h('i', { class: 'meta', style: 'left:' + (100 * n.tot / 2 / mx).toFixed(2) + '%' })),
+    h('div', { class: 'vl' }, curto(tot)));
+  const dA = n.proj - n.parc;
+  const projecao = bloco('proj', 'Projeção', 'estimativa do resultado final, com 100% apurado · não é resultado oficial', 'tr', [
+    colunas(), lin(A, 'a', n.proj, 'intervalo de 95%: ' + pct(n.lo) + ' a ' + pct(n.hi) + ' · ' + int(vA) + ' votos', liderA),
+    lin(B, 'b', 1 - n.proj, 'intervalo de 95%: ' + pct(1 - n.hi) + ' a ' + pct(1 - n.lo) + ' · ' + int(vB) + ' votos', !liderA),
+    h('div', { class: 'compo', role: 'img', 'aria-label': 'Votos já apurados e votos esperados no que falta, por candidato' }, barra('a', n.ac, vA), barra('b', n.bc, vB)),
+    h('div', { class: 'legenda' }, h('span', null, h('i', { class: 'cx', style: 'background:var(--ink2)' }), 'já apurado'), h('span', null, h('i', { class: 'cx', style: 'background:var(--ink2);opacity:.34' }), 'esperado no que falta'), h('span', null, h('i', { class: 'risco' }), 'metade dos votos válidos')),
+    h('p', { class: 'plac-pe' }, h('b', null, fraseChance() + '.'), n.vr > 0 && Math.abs(100 * dA) >= 0.005 ? ' Até o fim, ' + nomeC(dA >= 0 ? A : B) + ' deve ganhar ' + nf(2, 2).format(Math.abs(100 * dA)) + ' pt em relação ao dado real de agora.' : null)]);
+
+  const cg = h('div');
+  el.append(h('div', { class: 'trinca' }, apuracao, real, projecao), h('div', { class: 'card' },
+    h('h2', null, 'Evolução: o dado real do TSE se aproxima da projeção'),
+    h('p', { class: 'sub' }, '% dos votos válidos de cada candidato (vertical) conforme o % do eleitorado já apurado (horizontal).'),
+    h('div', { class: 'legenda' }, h('span', null, h('i', { class: 'cx', style: 'background:var(--a)' }), nomeC(A)), h('span', null, h('i', { class: 'cx', style: 'background:var(--b)' }), nomeC(B)), h('span', null, h('i', { class: 'ln' }), 'Dado real (TSE)'), h('span', null, h('i', { class: 'tr' }), 'Projeção'), h('span', null, h('i', { class: 'cx', style: 'background:var(--muted);opacity:.3' }), 'Intervalo de 95% da projeção')),
+    cg, detalhes('Ver as rodadas em tabela (percentuais de ' + nomeC(cand()) + ')', tabelaRodadas())));
+  graficoEvolucao(cg);
+}
+function graficoEvolucao(el) {
+  const todas = D.hist.filter(r => r[3] != null).map(r => ({ hora: r[0], x: r[1], parc: r[2], proj: r[3], lo: r[4], hi: r[5] })), rs = paraGrafico(todas);
+  if (!rs.length) { el.append(h('p', { class: 'sub' }, 'Sem rodadas ainda.')); return; }
+  const ca = cssVar('--a'), cb = cssVar('--b'), sup = cssVar('--surface'), largo = el.clientWidth >= 620;
+  const vals = rs.flatMap(r => [r.lo, r.hi, r.proj, r.parc]).filter(x => x != null);
+  const gr = baseGrafico(el, { alt: 380, vals: vals.concat(vals.map(x => 100 - x)), centro: 50, ref: 50, corte: rs.length < todas.length, fmtY: t => nf(0, 2).format(t) + '%', m: { r: largo ? 140 : 72 }, rotulo: 'Placar oficial e projeção dos dois candidatos ao longo da apuração' });
+  const { g, X, Y } = gr, u = rs[rs.length - 1], of = rs.filter(r => r.parc != null);
+  // quem a projeção aponta na frente é desenhado por último, para ficar por cima
+  const lados = u.proj >= 50 ? [[cb, x => 100 - x], [ca, x => x]] : [[ca, x => x], [cb, x => 100 - x]];
+  if (rs.length > 1) for (const [cor, f] of lados) g.append(s('path', { d: caminho(gr, rs.map(r => [r.x, f(r.hi)])) + 'L' + caminho(gr, rs.slice().reverse().map(r => [r.x, f(r.lo)])).slice(1) + 'Z', fill: cor, opacity: 0.13 }));
+  for (const [cor, f] of lados) {
+    if (of.length > 1) g.append(s('path', { d: caminho(gr, of.map(r => [r.x, f(r.parc)])), fill: 'none', stroke: cor, 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
+    if (rs.length > 1) g.append(s('path', { d: caminho(gr, rs.map(r => [r.x, f(r.proj)])), fill: 'none', stroke: cor, 'stroke-width': 2, 'stroke-dasharray': '6 5', 'stroke-linejoin': 'round' }));
+  }
+  // a projeção de agora segue até 100% apurado: é onde a linha cheia deve chegar
+  const falta = D.nac.vr > 0 && u.x < 99.5, longe = falta && X(100) - X(u.x) >= 130;
+  for (const [cor, f] of lados) {
+    if (falta) {
+      g.append(s('rect', { x: X(u.x), y: Y(Math.max(f(u.lo), f(u.hi))), width: X(100) - X(u.x), height: Math.abs(Y(f(u.lo)) - Y(f(u.hi))), fill: cor, opacity: 0.07 }));
+      g.append(s('line', { x1: X(u.x), x2: X(100), y1: Y(f(u.proj)), y2: Y(f(u.proj)), stroke: cor, 'stroke-width': 2, 'stroke-dasharray': '6 5', opacity: 0.55 }));
+      g.append(s('line', { x1: X(100), x2: X(100), y1: Y(f(u.hi)), y2: Y(f(u.lo)), stroke: cor, 'stroke-width': 4, 'stroke-linecap': 'round' }));
+    }
+    if (u.parc != null) g.append(s('circle', { cx: X(u.x), cy: Y(f(u.parc)), r: 4.5, fill: cor, stroke: sup, 'stroke-width': 2 }));
+    g.append(s('circle', { cx: X(falta ? 100 : u.x), cy: Y(f(u.proj)), r: 5, fill: sup, stroke: cor, 'stroke-width': 2.5 }));
+  }
+  const rot = (val, cor, nome, forte) => val == null ? null : { y: Y(val), cor, txt: f2(val) + (largo ? ' ' + nome : ''), forte };
+  const rProj = [rot(u.proj, ca, 'projeção', true), rot(100 - u.proj, cb, 'projeção', true)], rOf = [rot(u.parc, ca, 'TSE'), rot(u.parc == null ? null : 100 - u.parc, cb, 'TSE')];
+  if (longe) {
+    // os rótulos do oficial ficam ao lado do ponto de agora; se caírem em cima de uma linha de projeção, sobem ou descem
+    for (const it of rOf) if (it) for (const yo of [Y(u.proj), Y(100 - u.proj)]) if (Math.abs(it.y - yo) < 12) it.y = yo + (it.y <= yo ? -12 : 12);
+    rotulosFim(gr, X(100) + 11, rProj); rotulosFim(gr, X(u.x) + 11, rOf);
+  } else rotulosFim(gr, X(falta ? 100 : u.x) + 11, rProj.concat(rOf));
+  const nA = nomeC(D.a), nB = nomeC(D.b), op = x => x == null ? null : 100 - x;
+  poeMira(gr, rs, r => [{ y: r.parc, cor: ca }, { y: op(r.parc), cor: cb }, { y: r.proj, cor: ca }, { y: 100 - r.proj, cor: cb }], r => [r.hora + ' · ' + nf(1, 1).format(r.x) + '% apurado', [
+    r.parc != null ? { cor: ca, valor: f2(r.parc), rotulo: nA + ', dado real (TSE)' } : null, r.parc != null ? { cor: cb, valor: f2(100 - r.parc), rotulo: nB + ', dado real (TSE)' } : null,
+    { cor: ca, trac: true, valor: f2(r.proj), rotulo: nA + ', projeção (' + f2(r.lo) + ' a ' + f2(r.hi) + ')' }, { cor: cb, trac: true, valor: f2(100 - r.proj), rotulo: nB + ', projeção' }]]);
+}
+
+// ---------------------------------------------------------------------------------------------
+// carga e relógio
+// ---------------------------------------------------------------------------------------------
+let reiniciadoEm = 0;   // depois de "Reiniciar", ignora um passo antigo que ainda esteja a caminho
+window.receberPainel = function (d) {
+  if (!d || !d.meta) return;
+  if (d.meta.gerado === geradoAtual) return;
+  if (reiniciadoEm && new Date(d.meta.gerado).getTime() < reiniciadoEm - 1000) return;
+  // outra disputa (outros candidatos ou outro recorte): volta os filtros ao padrao
+  const chaveNova = [d.a && d.a.num, d.b && d.b.num, d.meta.cargo, d.meta.uf, d.meta.modo, d.meta.noite].join('|');
+  if (chaveNova !== chaveDisputa) { chaveDisputa = chaveNova; sel.cand = null; sel.uf = ''; sel.busca = ''; sel.ordem = null; sel.limite = 40; }
+  geradoAtual = d.meta.gerado; D = prepara(d); pedidoEm = 0; desenha(); relogio();
+};
+function carrega() { const sc = document.createElement('script'); sc.src = 'painel_dados.js?_=' + Date.now(); sc.charset = 'utf-8'; sc.onload = () => sc.remove(); sc.onerror = () => sc.remove(); document.head.append(sc); }
+function relogio() {
+  const el = $('#relogio'); if (!D) { el.textContent = ''; return; }
+  const m = D.meta, agora = Date.now(), ger = new Date(m.gerado).getTime(), idade = Math.max(0, (agora - ger) / 1000);
+  const mmss = t => Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0');
+  let txt = 'atualizado há ' + (idade < 90 ? Math.round(idade) + ' s' : Math.round(idade / 60) + ' min');
+  if (pedidoEm && agora - pedidoEm < 600000) txt += ' · atualização pedida, rodada em andamento…';
+  else if (m.modo === 'demo') txt = 'demonstração em andamento';
+  else if (m.proxima) { const falta = (new Date(m.proxima).getTime() - agora) / 1000; txt += falta > 0 ? ' · próxima rodada em ' + mmss(falta) : (m.modo === 'demo' ? '' : ' · rodada em andamento…'); }
+  const limite = Math.max(600, 150 * (parseFloat(m.loopMin) || 0));
+  if (m.modo === 'vivo' && idade > limite) txt = '⚠ sem dados novos há ' + Math.round(idade / 60) + ' min: verifique a janela da coleta';
+  el.textContent = txt;
+}
+setInterval(carrega, 4000); setInterval(relogio, 1000); carrega();
+
+{ const bt = $('#btAtualizar'); bt.addEventListener('click', () => { bt.disabled = true; fetch('/atualizar', { method: 'POST' }).then(() => { pedidoEm = Date.now(); relogio(); }).catch(() => { $('#relogio').textContent = 'não consegui falar com o servidor local'; }).finally(() => setTimeout(() => { bt.disabled = false; }, 8000)); }); }
+// demonstração: pede ao servidor local para recomeçar a noite e volta a tela para "aguardando"
+{ const bt = $('#btReiniciar'); bt.addEventListener('click', () => {
+  bt.disabled = true;
+  fetch('/reiniciar', { method: 'POST' }).then(r => {
+    if (!r.ok) throw new Error('recusado');
+    reiniciadoEm = Date.now(); D = null; geradoAtual = ''; chaveDisputa = ''; pedidoEm = 0;
+    const av = $('#aviso'); av.replaceChildren(Object.assign(document.createElement('strong'), { textContent: 'Reiniciando a demonstração…' }), 'A noite volta ao primeiro passo em alguns segundos.');
+    av.hidden = false; $('#conteudo').hidden = true; $('#chip').textContent = 'reiniciando'; $('#relogio').textContent = ''; scrollTo(0, 0);
+  }).catch(() => { $('#relogio').textContent = 'não consegui reiniciar: o servidor local não respondeu'; }).finally(() => setTimeout(() => { bt.disabled = false; }, 5000));
+}); }
+$('#btTema').addEventListener('click', () => { const r = document.documentElement, escuro = r.dataset.theme ? r.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches; r.dataset.theme = escuro ? 'light' : 'dark'; try { localStorage.setItem('tema', r.dataset.theme); } catch (e) {} if (D) desenha(); });
+// tema guardado; ?tema=claro ou ?tema=escuro na URL fixa um deles
+{ let t = null; try { t = localStorage.getItem('tema'); } catch (e) {} const u = new URLSearchParams(location.search).get('tema'); if (u === 'claro') t = 'light'; else if (u === 'escuro') t = 'dark'; if (t) document.documentElement.dataset.theme = t; }
+let tRed = 0; addEventListener('resize', () => { clearTimeout(tRed); tRed = setTimeout(() => { if (D && D.nac.proj != null) desenhaHero(); }, 150); });
+</script>
+</body>
+</html>
