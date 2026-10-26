@@ -1,0 +1,10 @@
+{
+  "title": "projecao-apuracao-tse: projeção em tempo real da apuração eleitoral com seções pareadas",
+  "upload_type": "software",
+  "version": "1.0",
+  "creators": [
+    { "name": "Teixeira, Gabriel Telles" }
+  ],
+  "description": "<p>Código da ferramenta de projeção usada ao vivo no 2º turno presidencial brasileiro de 25 de outubro de 2026 e das análises do artigo <em>Projeção em tempo real de resultados eleitorais com seções pareadas: método e avaliação no 2º turno presidencial brasileiro de 2026</em>. A ferramenta compara o voto das seções já apuradas com o voto delas mesmas no turno de referência, a partir de dados públicos do Tribunal Superior Eleitoral. Inclui os scripts que reproduzem todas as tabelas e figuras do artigo.</p>",
+  "keywords": ["projeção eleitoral", "apuração em tempo real", "eleições brasileiras", "TSE", "swing"]
+}
