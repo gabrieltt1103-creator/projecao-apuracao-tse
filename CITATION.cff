@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "Se usar este código, cite-o como indicado abaixo."
+title: "projecao-apuracao-tse: projeção em tempo real da apuração eleitoral com seções pareadas"
+authors:
+  - family-names: Teixeira
+    given-names: Gabriel Telles
+version: "1.0"
+date-released: 2026-10-26
+license: MIT
+repository-code: "https://github.com/gabrieltt1103-creator/projecao-apuracao-tse"
+abstract: >-
+  Código da ferramenta de projeção usada ao vivo no 2º turno presidencial
+  brasileiro de 25 de outubro de 2026 e das análises do artigo "Projeção em
+  tempo real de resultados eleitorais com seções pareadas". Compara o voto das
+  seções já apuradas com o voto delas mesmas no turno de referência, a partir
+  de dados públicos do Tribunal Superior Eleitoral.
+keywords:
+  - projeção eleitoral
+  - apuração em tempo real
+  - eleições brasileiras
+  - TSE
+  - swing

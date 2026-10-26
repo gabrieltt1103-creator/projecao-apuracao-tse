@@ -434,7 +434,7 @@ q_min, q_max = min(Q_DEP), max(Q_DEP)
 corpo = f'''
 <div class="topo"><span>Artigo original</span><span>Preprint · versão de 26 de outubro de 2026</span></div>
 <h1>Projeção em tempo real de resultados eleitorais com seções pareadas: método e avaliação no 2º turno presidencial brasileiro de 2026</h1>
-<p class="autor"><a href="{LINKEDIN}">Gabriel Teixeira</a></p>
+<p class="autor"><a href="{LINKEDIN}">Gabriel Telles Teixeira</a></p>
 <p class="afil">Pesquisador independente, Brasil</p>
 
 <div class="resumo">
@@ -545,7 +545,7 @@ corpo = f'''
 
 <div class="decl">
 <h2 class="decl-t">Declarações</h2>
-<p><b>Contribuição do autor.</b> Gabriel Teixeira concebeu o estudo, propôs o método e definiu suas características e nuances, supervisionou a construção do código, os testes e a operação ao vivo, e interpretou os resultados.</p>
+<p><b>Contribuição do autor.</b> Gabriel Telles Teixeira concebeu o estudo, propôs o método e definiu suas características e nuances, supervisionou a construção do código, os testes e a operação ao vivo, e interpretou os resultados.</p>
 <p><b>Uso de inteligência artificial.</b> O assistente de inteligência artificial Claude (Anthropic) auxiliou, sob supervisão do autor, na construção do código da ferramenta e nos testes do modelo, incluindo as reconstituições das noites de 2022 e de 2026, e na preparação do texto deste artigo a partir dos resultados e das orientações do autor. As decisões sobre o método e as conclusões foram tomadas ou aprovadas pelo autor, que revisou o código, os resultados e o texto e assume integral responsabilidade pelo conteúdo. A ferramenta não é autora do trabalho.</p>
 <p><b>Financiamento.</b> Esta pesquisa não recebeu financiamento.</p>
 <p><b>Conflito de interesses.</b> O autor é filiado ao Partido Socialismo e Liberdade (PSOL) desde 2006. A filiação reflete apenas posicionamento político: o autor nunca foi candidato, nunca exerceu cargo político ou partidário, remunerado ou não, e não participa das atividades do partido. O partido não teve nenhum papel no estudo. O código do modelo foi congelado 17 dias antes da eleição, e todos os resultados podem ser reproduzidos a partir de dados públicos. Não há outros conflitos de interesses a declarar.</p>
@@ -561,7 +561,7 @@ corpo = f'''
 
 CSS = '''
 @page { size: A4; margin: 22mm 21mm 20mm;
-  @top-left { content: "G. Teixeira"; font: italic 8.5pt 'STIX Two Text', serif; color: #777; }
+  @top-left { content: "G. T. Teixeira"; font: italic 8.5pt 'STIX Two Text', serif; color: #777; }
   @top-right { content: "Projeção em tempo real com seções pareadas"; font: italic 8.5pt 'STIX Two Text', serif; color: #777; }
   @bottom-center { content: counter(page); font: 9pt 'STIX Two Text', serif; color: #555; } }
 @page :first { @top-left { content: none; } @top-right { content: none; } }

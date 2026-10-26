@@ -2,7 +2,7 @@
 
 Código da ferramenta de projeção usada ao vivo na noite do 2º turno presidencial brasileiro de 25 de outubro de 2026 e das análises do artigo:
 
-> Teixeira, G. (2026). *Projeção em tempo real de resultados eleitorais com seções pareadas: método e avaliação no 2º turno presidencial brasileiro de 2026* [Preprint].
+> Teixeira, G. T. (2026). *Projeção em tempo real de resultados eleitorais com seções pareadas: método e avaliação no 2º turno presidencial brasileiro de 2026* [Preprint].
 
 ## A ideia
 
