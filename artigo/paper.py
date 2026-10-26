@@ -439,6 +439,7 @@ q_min, q_max = min(Q_DEP), max(Q_DEP)
 corpo = f'''
 <div class="topo"><span>Artigo original</span><span>Preprint · versão de 26 de outubro de 2026</span></div>
 <h1>Projeção em tempo real de resultados eleitorais com seções pareadas: método e avaliação no 2º turno presidencial brasileiro de 2026</h1>
+<p class="tit-en" lang="en">Real-time projection of election results with matched polling stations: method and evaluation in the 2026 Brazilian presidential runoff</p>
 <p class="autor"><a href="{LINKEDIN}">Gabriel Telles Teixeira</a> <a class="orcid" href="{ORCID}" title="ORCID">{ORCID_ICONE}</a></p>
 <p class="afil">Pesquisador independente, Brasil · ORCID: <a href="{ORCID}">{ORCID}</a></p>
 
@@ -572,7 +573,7 @@ CSS = '''
 @page :first { @top-left { content: none; } @top-right { content: none; } }
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
-body { font-family: 'STIX Two Text', 'Cambria', serif; font-size: 10.6pt; line-height: 1.5; color: #1A1A1A; text-align: justify; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { font-family: 'STIX Two Text', 'Cambria', serif; font-size: 10.6pt; line-height: 1.5; color: #1A1A1A; text-align: justify; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-variant-ligatures: none; }
 math { font-family: 'Cambria Math', 'STIX Two Math', math; font-size: 1.04em; }
 a { color: inherit; text-decoration: none; }
 .topo { display: flex; justify-content: space-between; font: 600 8pt Inter, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: #6A6A6A; border-bottom: 0.6pt solid #1A1A1A; padding-bottom: 2mm; margin-bottom: 6mm; }
@@ -584,6 +585,9 @@ h1 { font-family: 'STIX Two Text', serif; font-size: 19pt; line-height: 1.22; fo
 .resumo p { margin: 0 0 1.6mm; }
 .resumo .pc { margin: 0; font-size: 9.2pt; }
 .resumo.en { margin-bottom: 7mm; }
+/* titulo em ingles numa linha so, logo abaixo do titulo: o verificador do SciELO Preprints extrai o texto com
+   pdftotext -layout e junta as linhas sem separador, entao um titulo quebrado em duas linhas nao e encontrado */
+.tit-en { font-style: italic; font-size: 8.1pt; white-space: nowrap; margin: -1.5mm 0 4.5mm; color: #3A3A40; text-align: left; }
 h2 { font: 700 12.5pt Inter, sans-serif; margin: 7mm 0 2.5mm; break-after: avoid; text-align: left; }
 h3 { font: 600 10.5pt Inter, sans-serif; margin: 4.5mm 0 1.5mm; break-after: avoid; text-align: left; color: #222; }
 p { margin: 0 0 2.6mm; orphans: 3; widows: 3; }
