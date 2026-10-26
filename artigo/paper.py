@@ -8,6 +8,10 @@ INK, MUTED, GRID = '#1A1A1A', '#666666', '#E2E2E2'
 C_PROJ, C_RAP, C_PLAC, C_SIMP, C_SEM = '#17607D', '#7DB2C9', '#3A3A3A', '#B07A12', '#8A5A9E'
 FRACS = [2, 5, 10, 15, 20, 30, 40, 50, 60, 70, 80, 90, 95, 98]
 LINKEDIN = 'https://www.linkedin.com/in/gabrieltteixeira'
+ORCID = 'https://orcid.org/0009-0007-3312-4842'
+ORCID_ICONE = ('<svg viewBox="0 0 24 24" width="13" height="13" style="vertical-align:-1px" xmlns="http://www.w3.org/2000/svg">'
+               '<circle cx="12" cy="12" r="12" fill="#A6CE39"/><text x="12" y="16.3" font-size="11.5" font-weight="700" fill="#FFFFFF" '
+               'text-anchor="middle" font-family="Arial, sans-serif">iD</text></svg>')
 
 
 def n(v, d=1):
@@ -435,8 +439,8 @@ q_min, q_max = min(Q_DEP), max(Q_DEP)
 corpo = f'''
 <div class="topo"><span>Artigo original</span><span>Preprint · versão de 26 de outubro de 2026</span></div>
 <h1>Projeção em tempo real de resultados eleitorais com seções pareadas: método e avaliação no 2º turno presidencial brasileiro de 2026</h1>
-<p class="autor"><a href="{LINKEDIN}">Gabriel Telles Teixeira</a></p>
-<p class="afil">Pesquisador independente, Brasil</p>
+<p class="autor"><a href="{LINKEDIN}">Gabriel Telles Teixeira</a> <a class="orcid" href="{ORCID}" title="ORCID">{ORCID_ICONE}</a></p>
+<p class="afil">Pesquisador independente, Brasil · ORCID: <a href="{ORCID}">{ORCID}</a></p>
 
 <div class="resumo">
 <p><b>Resumo.</b> Durante a apuração, o placar parcial é um estimador viesado do resultado final, porque as seções não chegam em ordem aleatória. Este artigo propõe e avalia um método de projeção em tempo real que usa dois conjuntos de dados públicos do Tribunal Superior Eleitoral: os boletins de urna de cada seção no turno de referência e a relação das seções já recebidas, atualizada durante a apuração. Em cada unidade (município × zona eleitoral), o voto das seções apuradas é comparado com o voto delas mesmas no turno de referência. A variação é modelada por uma regressão ponderada com efeitos por unidade da federação e encolhimento, combinada com o desvio observado da unidade por um fator de credibilidade e aplicada às seções que faltam; a incerteza vem de uma simulação de Monte Carlo. Em reconstituições de duas noites reais com o horário de chegada de cada seção, o erro absoluto médio foi de {n(S22[PAD]['eam'], 2)} e {n(S26[PAD]['eam'], 2)} ponto percentual, contra {n(S22['parcial (o que o placar mostra)']['eam'], 2)} e {n(S26['parcial (o que o placar mostra)']['eam'], 2)} do placar, e o intervalo de 95% conteve o resultado nos 28 cortes avaliados. Ao vivo, no 2º turno presidencial de 2026, com o código congelado 17 dias antes, a projeção indicou o vencedor com {n(M_IC50['pct'], 1)}% do eleitorado apurado e ficou a menos de 0,1 ponto do resultado a partir de {n(M_010['pct'], 0)}%. Com apenas 62 seções apuradas, porém, o intervalo subestimou a incerteza, por ignorar o erro de estimação dos parâmetros; discutem-se a causa e as correções.</p>
