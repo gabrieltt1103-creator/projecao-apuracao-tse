@@ -5,6 +5,7 @@ authors:
   - family-names: Teixeira
     given-names: Gabriel Telles
 version: "1.0"
+doi: 10.5281/zenodo.23672276
 date-released: 2026-10-26
 license: MIT
 repository-code: "https://github.com/gabrieltt1103-creator/projecao-apuracao-tse"

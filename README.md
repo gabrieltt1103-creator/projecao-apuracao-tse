@@ -1,5 +1,7 @@
 # Projeção em tempo real da apuração com seções pareadas
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23672276.svg)](https://doi.org/10.5281/zenodo.23672276)
+
 Código da ferramenta de projeção usada ao vivo na noite do 2º turno presidencial brasileiro de 25 de outubro de 2026 e das análises do artigo:
 
 > Teixeira, G. T. (2026). *Projeção em tempo real de resultados eleitorais com seções pareadas: método e avaliação no 2º turno presidencial brasileiro de 2026* [Preprint].
@@ -63,7 +65,7 @@ powershell -ExecutionPolicy Bypass -File preparar_simulacoes.ps1
 powershell -ExecutionPolicy Bypass -File reproduzir_artigo.ps1 -Pdf
 ```
 
-Na primeira vez, `preparar_simulacoes.ps1` baixa alguns GB de boletins de urna; `-SoListar` mostra antes o que será baixado. Os resultados ficam em `saida/`. As simulações usam semente fixa, e o artigo gerado é idêntico ao publicado.
+Na primeira vez, `preparar_simulacoes.ps1` baixa alguns GB de boletins de urna; `-SoListar` mostra antes o que será baixado. Os resultados ficam em `saida/`. As simulações usam semente fixa, e o artigo gerado é idêntico ao publicado. A versão v1.0, arquivada no Zenodo, gera os mesmos números, tabelas e figuras; a versão atual do repositório gera também o texto final do artigo, que passou a citar o DOI do código.
 
 ## Versão usada na noite
 
@@ -72,6 +74,16 @@ Na primeira vez, `preparar_simulacoes.ps1` baixa alguns GB de boletins de urna; 
 ## Dados
 
 Todos os dados são públicos: o Portal de Dados Abertos do TSE (boletins de urna) e o sistema de divulgação de resultados (`resultados.tse.jus.br`). Os scripts limitam o número de conexões e fazem pausas entre os pedidos; mantenha essa cortesia com os servidores do TSE.
+
+## Como citar
+
+O código:
+
+> Teixeira, G. T. (2026). *projecao-apuracao-tse: Projeção em tempo real da apuração eleitoral com seções pareadas* (Versão 1.0) [Software]. Zenodo. https://doi.org/10.5281/zenodo.23672276
+
+O artigo:
+
+> Teixeira, G. T. (2026). *Projeção em tempo real de resultados eleitorais com seções pareadas: método e avaliação no 2º turno presidencial brasileiro de 2026* [Preprint].
 
 ## Uso de inteligência artificial
 
